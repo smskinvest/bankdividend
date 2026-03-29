@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Manual: คู่มือวิเคราะห์หุ้นกลุ่มธนาคาร (Banking Sector Analysis)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Navy Blue (Trust/Finance), Gold (Dividends/Wealth), Slate (Backgrounds/Text) -->
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .text-navy { color: #0f172a; }
+        .bg-navy { background-color: #0f172a; }
+        .text-gold { color: #d97706; }
+        .bg-gold { background-color: #d97706; }
+        .border-gold { border-color: #d97706; }
+        
+        /* Chart Container Styling - Mandatory Requirement */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 400px; }
+        }
+
+        /* Tab Active State */
+        .tab-active { border-bottom: 2px solid #d97706; color: #d97706; font-weight: 600; }
+        .tab-inactive { color: #64748b; font-weight: 400; }
+        .tab-inactive:hover { color: #0f172a; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Application Structure Plan: 
+    1. Hero Section: Clear title and purpose.
+    2. The Core Mechanics (Section 1): Explains how banks make money (NIM & Fees) to set the foundation.
+    3. The 6 Pillars of Analysis (Section 2): Interactive grid detailing the 6 key metrics (Credit Growth, NPL, P/BV, etc.) from the text.
+    4. The P/BV Cycle (Section 3): Chart.js visualization showing how bank valuations move with the economy, crucial for timing entries.
+    5. Thai Banks & 7 Powers Matrix (Section 4): Synthesizes the provided text's bank personas with the 7 Powers framework for strategic understanding via interactive tabs.
+    6. Dividend & Tax Credit Focus (Section 5): Directly answers the user's prompt about maximizing tax credits with an interactive calculator and explanation.
+    7. Outlook 2025-2026 (Section 6): Summarizes the KKPS report data.
+    Reasoning: This structure moves from foundational knowledge -> analytical tools -> valuation timing -> strategic positioning -> actionable dividend advice -> future outlook. This logical flow transforms a dense report into a step-by-step educational dashboard. -->
+
+    <!-- Visualization & Content Choices: 
+    1. Business Model: HTML Flexbox diagram. Goal: Inform. Method: Simple visual flow (Deposits -> Bank -> Loans). Library: HTML/Tailwind.
+    2. 6 Key Metrics: Interactive Cards. Goal: Organize/Inform. Method: Click to reveal details. Library: Vanilla JS + HTML.
+    3. P/BV Cycle: Line Chart. Goal: Change/Trend over time. Method: Chart.js plotting economic phases vs P/BV. Justification: Visualizing the "cycle" is easier than reading about it.
+    4. 7 Powers Analysis: Tabbed Interface. Goal: Compare/Organize. Method: Select a bank to see its customer base and applied '7 Powers' strategy. Justification: Consolidates two different concepts (Bank profiles + Strategic framework) into one manageable component.
+    5. Tax Credit: Interactive Calculator & Table. Goal: Inform/Apply. Method: JS calculator using standard corporate tax rates. Justification: Directly answers the user's core question interactively.
+    6. 2025-2026 Outlook: Bar Chart. Goal: Inform/Compare. Method: Chart.js showing profit growth and dividend yields based on KKPS data. 
+    CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Navbar -->
+    <nav class="bg-navy text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold tracking-wider">BANK<span class="text-gold">ANALYTICS</span></span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8 text-sm">
+                    <a href="#basics" class="hover:text-gold transition-colors">พื้นฐานธุรกิจ</a>
+                    <a href="#metrics" class="hover:text-gold transition-colors">6 ตัวแปรสำคัญ</a>
+                    <a href="#cycle" class="hover:text-gold transition-colors">วัฏจักร P/BV</a>
+                    <a href="#powers" class="hover:text-gold transition-colors">7 Powers</a>
+                    <a href="#dividends" class="text-gold font-semibold hover:text-white transition-colors">เครดิตภาษีเงินปันผล ★</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-white border-b border-gray-200 py-12 md:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-5xl font-bold text-navy mb-4 leading-tight">คู่มือวิเคราะห์หุ้นกลุ่มธนาคาร ฉบับสมบูรณ์</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto mb-8">เรียนรู้วิธีการประเมินมูลค่าหุ้นธนาคารพาณิชย์ไทย เข้าใจวัฏจักรเศรษฐกิจ ประยุกต์ใช้กลยุทธ์ 7 Powers และเจาะลึกเทคนิคการเลือกหุ้นธนาคารเพื่อรับ <b>"เครดิตภาษีเงินปันผล"</b> ให้คุ้มค่าที่สุด</p>
+            <div class="inline-flex space-x-4">
+                <a href="#dividends" class="bg-gold hover:bg-yellow-600 text-white font-medium py-3 px-6 rounded-lg transition-colors shadow-md">
+                    ดูเทคนิคปันผล & เครดิตภาษี
+                </a>
+                <a href="#metrics" class="bg-slate-100 hover:bg-slate-200 text-navy font-medium py-3 px-6 rounded-lg transition-colors border border-slate-300">
+                    เริ่มเรียนรู้พื้นฐาน
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <!-- SECTION 1: How Banks Make Money -->
+        <section id="basics" class="scroll-mt-20">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold text-navy mb-2">ธนาคารทำกำไรอย่างไร?</h2>
+                <p class="text-gray-600">ทำความเข้าใจที่มาของรายได้หลักที่ขับเคลื่อนงบการเงิน</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-4 text-navy">โครงสร้างรายได้หลัก 2 ทาง</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-2xl mr-3">💰</span>
+                            <div>
+                                <strong class="text-navy">1. รายได้จากดอกเบี้ยสุทธิ (NIM)</strong>
+                                <p class="text-sm text-gray-600 mt-1">กำไรจาก "ส่วนต่าง" ระหว่างดอกเบี้ยที่เก็บจากผู้กู้ ลบด้วย ดอกเบี้ยที่จ่ายให้ผู้ฝากเงิน (ยิ่งถ่าง ยิ่งกำไรดี)</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-2xl mr-3">📄</span>
+                            <div>
+                                <strong class="text-navy">2. รายได้ที่มิใช่ดอกเบี้ย (Non-NII / Fees)</strong>
+                                <p class="text-sm text-gray-600 mt-1">ค่าธรรมเนียมต่างๆ เช่น โอนเงิน, บัตรเครดิต, ขายประกัน (Bancassurance), กองทุนรวม และกำไรจากการลงทุน (FVTPL)</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Simple HTML/CSS Flow Diagram -->
+                <div class="bg-slate-50 p-6 rounded-2xl flex flex-col items-center justify-center space-y-4 border border-slate-200 h-full">
+                    <div class="flex justify-between items-center w-full max-w-sm">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl mx-auto mb-2 shadow-inner">🧍</div>
+                            <span class="text-sm font-medium">ผู้ฝากเงิน</span><br>
+                            <span class="text-xs text-red-500">จ่ายดอกเบี้ยฝาก (ต่ำ)</span>
+                        </div>
+                        <div class="text-3xl text-gray-300">➡</div>
+                        <div class="text-center z-10">
+                            <div class="w-24 h-24 bg-navy text-white rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-2 shadow-lg border-b-4 border-gold">
+                                BANK
+                            </div>
+                            <span class="text-sm font-bold text-gold">กำไร (Spread)</span>
+                        </div>
+                        <div class="text-3xl text-gray-300">➡</div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-2xl mx-auto mb-2 shadow-inner">🏢</div>
+                            <span class="text-sm font-medium">ผู้กู้ยืม</span><br>
+                            <span class="text-xs text-green-600">รับดอกเบี้ยกู้ (สูง)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: 6 Key Metrics -->
+        <section id="metrics" class="scroll-mt-20">
+            <div class="mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold text-navy mb-2">6 ตัวแปรสำคัญในการวิเคราะห์งบการเงิน</h2>
+                <p class="text-gray-600">คลิกที่ไพ่แต่ละใบเพื่อดูความหมายและวิธีนำไปใช้งาน</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="metrics-grid">
+                <!-- JS will populate this -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: The P/BV Cycle -->
+        <section id="cycle" class="scroll-mt-20 bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+            <div class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-navy mb-2">ทำไมต้องใช้ P/BV? และวัฏจักรของหุ้นธนาคาร</h2>
+                <p class="text-gray-600">หุ้นธนาคารกำไรผันผวนตามเศรษฐกิจ การใช้ P/E อาจหลอกตา (ตอนวิกฤตกำไรน้อย P/E จะดูแพง) นักลงทุนจึงนิยมใช้ P/BV เทียบความถูกแพงแทน กรอบปกติคือ 1.2x - 2.5x</p>
+            </div>
+
+            <div class="chart-container mb-8">
+                <canvas id="pbvCycleChart"></canvas>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div class="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                    <strong class="text-red-700 block mb-1">1. วิกฤต/ชะลอตัว</strong>
+                    <p class="text-xs text-gray-700">สินเชื่อไม่โต, ตั้งสำรอง NPL เพิ่ม, P/BV โดนเทขายจนหลุด 1.0x (ซื้อขายต่ำกว่ามูลค่าทางบัญชี)</p>
+                </div>
+                <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                    <strong class="text-yellow-700 block mb-1">2. จุดต่ำสุด (Bottom)</strong>
+                    <p class="text-xs text-gray-700">NPL พีคแล้ว, กำไรผ่านจุดต่ำสุด คนเริ่มมั่นใจว่าไม่แย่ไปกว่านี้ P/BV เริ่มเด้งกลับมายืนแถว 1.0x - 1.2x</p>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <strong class="text-blue-700 block mb-1">3. ฟื้นตัว (Recovery)</strong>
+                    <p class="text-xs text-gray-700">สินเชื่อเริ่มกลับมาโต, ลดการตั้งสำรอง กำไรฟื้นตัวชัดเจน P/BV วิ่งเข้าสู่กรอบปกติ 1.2x - 1.5x</p>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                    <strong class="text-green-700 block mb-1">4. เติบโต (Boom)</strong>
+                    <p class="text-xs text-gray-700">เศรษฐกิจดีมาก สินเชื่อโตทะลุ 10% คนแห่ซื้อด้วยความคาดหวัง P/BV อาจทะลุ 2.0x - 2.5x (ควรระวัง)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: Bank Personas & 7 Powers -->
+        <section id="powers" class="scroll-mt-20">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl md:text-3xl font-bold text-navy mb-2">เจาะลึกธนาคารไทยด้วย 7 Powers</h2>
+                <p class="text-gray-600">วิเคราะห์จุดเด่น (Persona) ของแต่ละธนาคาร และความได้เปรียบทางการแข่งขัน (Economic Moats) ตามหลัก 7 Powers</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="flex border-b border-gray-200 overflow-x-auto" id="bank-tabs">
+                    <!-- Tabs generated by JS -->
+                </div>
+                <div class="p-6 md:p-8" id="bank-content">
+                    <!-- Content generated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: THE USER'S SPECIFIC QUESTION - DIVIDENDS & TAX CREDIT (CRITICAL) -->
+        <section id="dividends" class="scroll-mt-20 bg-navy text-white p-6 md:p-10 rounded-3xl shadow-xl relative overflow-hidden">
+            <!-- Decorative background element -->
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 text-9xl opacity-5">💰</div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center space-x-3 mb-6">
+                    <span class="text-3xl">⭐</span>
+                    <h2 class="text-2xl md:text-4xl font-bold text-gold">หุ้นธนาคารตัวไหน ได้เครดิตภาษีปันผลคุ้มสุด?</h2>
+                </div>
+                
+                <p class="text-gray-300 text-lg mb-8 leading-relaxed">
+                    การเลือกหุ้นปันผล ไม่ใช่แค่ดู % Yield แต่ต้องดูว่าเงินปันผลนั้น <b>"เสียภาษีนิติบุคคลมาแล้วกี่เปอร์เซ็นต์"</b> 
+                    เพราะเราสามารถนำมาขอ <b>"เครดิตภาษีเงินปันผล" (Dividend Tax Credit)</b> คืนได้ตอนยื่นภาษีประจำปี (ภ.ง.ด. 90) 
+                    หากฐานภาษีส่วนบุคคลของเราต่ำกว่าภาษีนิติบุคคลที่บริษัทจ่ายไป
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    <!-- Explanation Box -->
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <h3 class="text-xl font-semibold mb-4 text-gold">หลักการจำง่ายๆ</h3>
+                        <ul class="space-y-4 text-gray-300 text-sm">
+                            <li class="flex items-start">
+                                <span class="text-green-400 mr-2">✔</span>
+                                <span><b>ธนาคารส่วนใหญ่เสียภาษีนิติบุคคล 20%:</b> ทำให้ได้เครดิตภาษี = <code class="bg-slate-900 px-2 py-1 rounded text-gold">ปันผล x (20/80)</code> หรือคิดเป็น 25% ของเงินปันผลที่ได้รับ!</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-red-400 mr-2">✘</span>
+                                <span><b>ระวังเงินปันผลจากกำไรที่ได้รับยกเว้นภาษี (BOI / ขาดทุนสะสม):</b> ถ้าบริษัทจ่ายปันผลจากส่วนที่ <b>ไม่เสียภาษี (0%)</b> เราจะ <b>ไม่สามารถขอเครดิตภาษีได้</b></span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-blue-400 mr-2">ℹ</span>
+                                <span><b>หุ้นธนาคารที่โดดเด่นเรื่องปันผล (ข้อมูลอ้างอิง):</b> <br>
+                                - <b>TISCO, KKP, TCAP:</b> กลุ่มเช่าซื้อที่ให้ Yield สูง (มักจะ 6-8%+) และมักจ่ายจากกำไรที่เสียภาษี 20% ทำให้ได้เครดิตภาษีเต็มเม็ดเต็มหน่วย<br>
+                                - <b>SCB, BBL, KTB:</b> ตามรายงาน KKPS คาดว่าปี 2025 จะมี Dividend Yield ราว 7% และจ่ายจากกำไรสุทธิปกติ (20%)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Interactive Calculator -->
+                    <div class="bg-white text-navy p-6 rounded-xl shadow-inner">
+                        <h3 class="text-xl font-bold mb-4 border-b pb-2">คำนวณความคุ้มค่า (Simulator)</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">เงินปันผลรับสุทธิ (บาท)</label>
+                                <input type="number" id="divInput" value="10000" class="w-full border border-gray-300 rounded-md p-2 focus:ring-gold focus:border-gold outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">แหล่งที่มาของกำไรที่จ่ายปันผล</label>
+                                <select id="taxRateInput" class="w-full border border-gray-300 rounded-md p-2 focus:ring-gold outline-none">
+                                    <option value="20">เสียภาษีนิติบุคคล 20% (ธนาคารส่วนใหญ่)</option>
+                                    <option value="0">ไม่เสียภาษี / BOI (0%)</option>
+                                </select>
+                            </div>
+
+                            <div class="pt-4 mt-4 border-t border-gray-100">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-600 font-medium">เครดิตภาษีที่ได้เพิ่ม:</span>
+                                    <span id="calcCredit" class="text-xl font-bold text-green-600">+ 2,500 บาท</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 font-medium">รวมเงินได้นำไปคำนวณภาษี:</span>
+                                    <span id="calcTotal" class="text-lg font-bold">12,500 บาท</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">*หมายเหตุ: ความคุ้มค่าจริงขึ้นอยู่กับ "ฐานภาษีเงินได้บุคคลธรรมดา" ของคุณ หากฐานภาษีคุณ < 20% คุณจะได้เงินคืน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actionable Conclusion -->
+                <div class="bg-gold/20 p-4 rounded-lg border border-gold/30">
+                    <p class="font-medium text-white">
+                        <span class="text-gold text-xl">💡</span> <b>บทสรุปเพื่อเครดิตภาษีสูงสุด:</b> สำหรับกลุ่มธนาคาร แนะนำให้เลือก <b>TISCO</b> หรือ <b>SCB</b> 
+                        เนื่องจากมีนโยบาย Payout Ratio สูง (จ่ายปันผลเกิน 80% ของกำไร) ให้ Yield เริ่มต้นสูง (ราว 7-8%) 
+                        และจ่ายจากฐานกำไรที่เสียภาษี 20% ทำให้เมื่อรวมเครดิตภาษีแล้ว ผลตอบแทนรวม (Total Return จากปันผล) อาจทะลุ 10% สำหรับผู้ที่ฐานภาษีต่ำ!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: Outlook 2025-2026 -->
+        <section id="outlook" class="scroll-mt-20">
+            <div class="mb-10 text-center">
+                <h2 class="text-2xl md:text-3xl font-bold text-navy mb-2">สรุปมุมมอง (Outlook) ปี 2025 - 2026</h2>
+                <p class="text-gray-600">อ้างอิงจากบทวิเคราะห์หลักทรัพย์ KKPS</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                <!-- Text Insights -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-navy mb-4 border-l-4 border-gold pl-3">ภาพรวมอุตสาหกรรม</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <span class="text-gold font-bold mr-2">2025:</span>
+                            <span class="text-gray-700">คาดกำไรโต <b class="text-green-600">+5%</b> หนุนด้วยกำไรพิเศษจากการขายพันธบัตรและ FVTPL ช่วยชดเชยดอกเบี้ยขาลง ปันผลเด่นเฉลี่ย 7%</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-gold font-bold mr-2">2026:</span>
+                            <span class="text-gray-700">กำไรอาจอ่อนตัวเล็กน้อย <b class="text-red-500">-4%</b> เนื่องจากกำไรพิเศษลดลง และ NIM แคบลงตามทิศทางดอกเบี้ย แต่จะถูกชดเชยด้วยรายได้ค่าธรรมเนียมและสำรองหนี้ที่ลดลง</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-gold font-bold mr-2">จุดแข็ง:</span>
+                            <span class="text-gray-700"><b>CET1 (เงินกองทุนชั้นที่ 1) สูงมาก</b> ทำให้มีความสามารถในการจ่ายปันผลระดับ 80%+ ของกำไรสบายๆ (TISCO, SCB จ่ายเกิน 80% อยู่แล้ว, TTB ซื้อหุ้นคืนรวม 100%)</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-gold font-bold mr-2">Top Picks:</span>
+                            <span class="text-gray-700"><b>KTB</b> และ <b>KBANK</b> (มีแนวโน้มเพิ่มปันผล)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Chart container for Outlook -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-semibold text-center mb-4 text-navy">คาดการณ์การเติบโตกำไร & ปันผล (โดยประมาณ)</h3>
+                    <div class="chart-container">
+                        <canvas id="outlookChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm border-t border-slate-800 mt-20">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 Bank Analytics Dashboard. All data presented is based on synthesized public reports (KKPS & General Market Knowledge).</p>
+            <p class="mt-2 text-slate-500">*การลงทุนมีความเสี่ยง ผู้ลงทุนควรศึกษาข้อมูลก่อนการตัดสินใจ</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 1. Data for "6 Key Metrics" Section ---
+            const metricsData = [
+                { id: 1, title: 'อัตราเติบโตของสินเชื่อ', icon: '📈', desc: 'Credit Growth: รายได้หลัก หากสินเชื่อโต = รายได้ดอกเบี้ยเติบโตตาม' },
+                { id: 2, title: 'ส่วนต่างอัตราดอกเบี้ย (NIM)', icon: '⚖', desc: 'Net Interest Margin: ยิ่งดอกเบี้ยกู้สูงกว่าดอกฝากมาก ธนาคารยิ่งกำไรดี' },
+                { id: 3, title: 'รายได้ค่าธรรมเนียม (Fees)', icon: '💳', desc: 'รายได้เสริมจากบัตร กองทุน ประกัน ช่วยพยุงกำไรยามสินเชื่อไม่โต' },
+                { id: 4, title: 'หนี้เสีย (NPL / Stage 3)', icon: '⚠', desc: 'Non-Performing Loans: สะท้อนคุณภาพสินทรัพย์ หาก NPL สูง ต้องตั้งสำรองมาก กำไรหด' },
+                { id: 5, title: 'เงินกองทุนต่อสินทรัพย์เสี่ยง', icon: '🛡', desc: 'BIS Ratio / CET1: สะท้อนความมั่นคง ยิ่งสูงยิ่งแกร่ง จ่ายปันผลได้มากโดยไม่กระทบฐานะ' },
+                { id: 6, title: 'P/BV Ratio', icon: '📊', desc: 'Price/Book Value: ใช้ประเมินความถูกแพง หุ้นธนาคารมักเทรดในช่วง 0.8x - 2.5x ของมูลค่าทางบัญชี' }
+            ];
+
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsData.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="text-3xl mb-3">${m.icon}</div>
+                        <h4 class="text-lg font-semibold text-navy mb-2 group-hover:text-gold transition-colors">${m.title}</h4>
+                        <p class="text-gray-600 text-sm hidden group-hover:block animate-[fadeIn_0.3s_ease-in-out]">${m.desc}</p>
+                    </div>
+                    <div class="text-right mt-4 text-xs font-medium text-gold uppercase opacity-0 group-hover:opacity-100 transition-opacity">Hover to reveal</div>
+                `;
+                // Add simple CSS animation inline for JS-created elements
+                const style = document.createElement('style');
+                style.innerHTML = `@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }`;
+                document.head.appendChild(style);
+                
+                // Add click toggle for mobile where hover doesn't work well
+                card.addEventListener('click', function() {
+                    const p = this.querySelector('p');
+                    const hint = this.querySelector('.text-right');
+                    p.classList.toggle('hidden');
+                    if(p.classList.contains('hidden')){
+                        hint.style.opacity = '0';
+                    } else {
+                        hint.style.opacity = '1';
+                        hint.innerText = "Close";
+                    }
+                });
+                metricsGrid.appendChild(card);
+            });
+
+
+            // --- 2. Chart.js: P/BV Cycle Chart ---
+            const ctxCycle = document.getElementById('pbvCycleChart').getContext('2d');
+            new Chart(ctxCycle, {
+                type: 'line',
+                data: {
+                    labels: ['วิกฤต', 'ซึมยาว', 'ฟื้นตัว', 'ปกติ', 'เติบโตสูง', 'เริ่มชะลอ', 'วิกฤตใหม่'],
+                    datasets: [{
+                        label: 'P/BV Ratio',
+                        data: [0.8, 1.0, 1.2, 1.5, 2.5, 1.8, 0.9],
+                        borderColor: '#d97706', // Gold
+                        backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0f172a',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.4 // Smooth curve
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // MANDATORY for container sizing
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return ' P/BV: ' + context.parsed.y + 'x'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0.5,
+                            max: 3.0,
+                            title: { display: true, text: 'P/BV (เท่า)' },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+
+            // --- 3. Data & Logic for 7 Powers / Bank Personas ---
+            const bankData = {
+                'KBANK': { name: 'KBANK (กสิกร)', persona: 'SME & Fees', desc: 'เน้นลูกค้า SME, ดอกเบี้ยปานกลาง-ดี, รายได้ค่าธรรมเนียมแกร่ง (App K PLUS)', power: 'Network Economies', powerDesc: 'ฐานผู้ใช้งาน K PLUS ที่มหาศาล ทำให้เกิด Network Effect ดึงดูดบริการอื่นๆ เข้ามาเชื่อมต่อ (Ecosystem) ทำให้ลูกค้าย้ายค่ายยาก' },
+                'SCB': { name: 'SCB (ไทยพาณิชย์)', persona: 'Retail & Fees', desc: 'ขายชาวบ้าน/รายย่อย, ดอกเบี้ยปานกลาง-ดี, เน้นค่าธรรมเนียมและ Digital Transformation', power: 'Switching Costs / Branding', powerDesc: 'แอพ SCB EASY และการปรับโครงสร้างเป็น SCBX สร้างระบบนิเวศการเงินที่หลากหลาย ทำให้ลูกค้าผูกปิ่นโต และมีแบรนด์ที่แข็งแกร่ง' },
+                'BBL': { name: 'BBL (กรุงเทพ)', persona: 'Corporate Loans', desc: 'ธนาคารอนุรักษ์นิยม เน้นสินเชื่อบริษัทเอกชนใหญ่ (Corporate) ยอดกู้สูงแต่ดอกเบี้ย (NIM) ต่ำ ค่าธรรมเนียมน้อย', power: 'Scale Economies', powerDesc: 'ความได้เปรียบจากขนาดทุนที่ใหญ่ สามารถปล่อยกู้โครงการระดับ Mega Project ได้ ซึ่งธนาคารเล็กไม่สามารถรับความเสี่ยงคนเดียวได้' },
+                'KTB': { name: 'KTB (กรุงไทย)', persona: 'Government Base', desc: 'ปล่อยกู้รัฐ/ข้าราชการ ดอกเบี้ยถูกกดทับแต่ได้ปริมาณมหาศาล หนี้เสียกลุ่มนี้น้อย', power: 'Cornered Resource', powerDesc: 'การผูกขาดหรือเข้าถึงทรัพยากรภาครัฐ (เช่น แอพเป๋าตัง, บัญชีเงินเดือนข้าราชการ) เป็นข้อได้เปรียบที่คู่แข่งเลียนแบบไม่ได้' },
+                'TISCO': { name: 'TISCO / KKP', persona: 'Leasing & High Yield', desc: 'เช่าซื้อรถยนต์ (Leasing) และสินเชื่อเพื่อการบริโภค จ่ายปันผลหนักมาก', power: 'Process Power', powerDesc: 'กระบวนการอนุมัติสินเชื่อรถยนต์และการตามหนี้ที่มีประสิทธิภาพสูงมากจนเกิดเป็นวัฒนธรรมองค์กร ทำให้รักษา ROE ได้สูงอย่างต่อเนื่อง' }
+            };
+
+            const bankTabs = document.getElementById('bank-tabs');
+            const bankContent = document.getElementById('bank-content');
+
+            function renderBank(bankKey) {
+                const data = bankData[bankKey];
+                bankContent.innerHTML = `
+                    <div class="animate-[fadeIn_0.3s_ease-in-out]">
+                        <h3 class="text-2xl font-bold text-navy mb-2">${data.name}</h3>
+                        <p class="text-gold font-medium mb-4">ภาพจำเดิม: ${data.persona}</p>
+                        <p class="text-gray-700 mb-6 bg-slate-50 p-4 rounded-lg">${data.desc}</p>
+                        
+                        <div class="border-l-4 border-navy pl-4">
+                            <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">7 Powers Strategy Applied</span>
+                            <h4 class="text-lg font-bold text-navy mt-1">${data.power}</h4>
+                            <p class="text-sm text-gray-600 mt-2">${data.powerDesc}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            Object.keys(bankData).forEach((key, index) => {
+                const btn = document.createElement('button');
+                btn.className = `px-6 py-4 text-sm font-medium whitespace-nowrap outline-none transition-colors ${index === 0 ? 'tab-active bg-white' : 'tab-inactive bg-slate-50'}`;
+                btn.innerText = key;
+                btn.onclick = (e) => {
+                    // Reset all tabs
+                    Array.from(bankTabs.children).forEach(child => {
+                        child.className = 'px-6 py-4 text-sm font-medium whitespace-nowrap outline-none transition-colors tab-inactive bg-slate-50 border-b-2 border-transparent';
+                    });
+                    // Set active tab
+                    btn.className = 'px-6 py-4 text-sm font-medium whitespace-nowrap outline-none transition-colors tab-active bg-white';
+                    renderBank(key);
+                };
+                bankTabs.appendChild(btn);
+            });
+            // Render first bank default
+            renderBank(Object.keys(bankData)[0]);
+
+
+            // --- 4. Tax Credit Calculator Logic ---
+            const divInput = document.getElementById('divInput');
+            const taxRateInput = document.getElementById('taxRateInput');
+            const calcCredit = document.getElementById('calcCredit');
+            const calcTotal = document.getElementById('calcTotal');
+
+            function updateCalculator() {
+                const dividend = parseFloat(divInput.value) || 0;
+                const taxRate = parseFloat(taxRateInput.value);
+                
+                let credit = 0;
+                if (taxRate > 0) {
+                    credit = dividend * (taxRate / (100 - taxRate));
+                }
+                
+                const total = dividend + credit;
+
+                calcCredit.innerText = `+ ${credit.toLocaleString('th-TH', {minimumFractionDigits: 0, maximumFractionDigits: 2})} บาท`;
+                calcTotal.innerText = `${total.toLocaleString('th-TH', {minimumFractionDigits: 0, maximumFractionDigits: 2})} บาท`;
+            }
+
+            divInput.addEventListener('input', updateCalculator);
+            taxRateInput.addEventListener('change', updateCalculator);
+
+
+            // --- 5. Chart.js: Outlook Bar Chart ---
+            const ctxOutlook = document.getElementById('outlookChart').getContext('2d');
+            new Chart(ctxOutlook, {
+                type: 'bar',
+                data: {
+                    labels: ['ปี 2024', 'ปี 2025 (คาดการณ์)', 'ปี 2026 (คาดการณ์)'],
+                    datasets: [
+                        {
+                            label: 'การเติบโตของกำไร (%)',
+                            data: [0, 5, -4],
+                            backgroundColor: ['#94a3b8', '#10b981', '#ef4444'], // Gray, Green, Red
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // MANDATORY for container sizing
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return context.dataset.label + ': ' + context.parsed.y + '%'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: 'เปอร์เซ็นต์ (%)' },
+                            grid: { color: '#e2e8f0', borderDash: [5, 5] }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
